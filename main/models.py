@@ -10,12 +10,12 @@ class Product(models.Model):
         ('equipment', 'Equipment'),
     ]
 
-    name = models.CharField(max_length=255)  # Nama produk
-    price = models.IntegerField()  # Harga produk
-    description = models.TextField()  # Deskripsi produk
-    thumbnail = models.URLField(blank=True, null=True)  # Link gambar produk
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='jersey')  # Kategori produk
-    is_featured = models.BooleanField(default=False)  # Produk unggulan atau bukan
+    name = models.CharField(max_length=255) 
+    price = models.IntegerField()  
+    description = models.TextField()  
+    thumbnail = models.URLField(blank=True, null=True)  
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='jersey')  
+    is_featured = models.BooleanField(default=False)  
 
     def __str__(self):
         return f"{self.name} - {self.category}"
