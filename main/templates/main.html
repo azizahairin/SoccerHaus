@@ -1,6 +1,50 @@
 <h1>SoccerHaus</h1>
 
-<h5>Name: </h5>
-<p>{{ name }}<p>
-<h5>Class: </h5>
+<h5>Name:</h5>
+<p>{{ name }}</p>
+
+<h5>Class:</h5>
 <p>{{ class }}</p>
+
+<a href="{% url 'main:create_product' %}">
+  <button>+ Add Product</button>
+</a>
+
+<hr>
+
+{% if not products %}
+  <p>Belum ada data produk pada SoccerHaus.</p>
+{% else %}
+
+  {% for p in products %}
+    <div>
+      <h2>
+        <a href="{% url 'main:show_product' p.id %}">{{ p.name }}</a>
+      </h2>
+
+      <p>
+        <b>{{ p.get_category_display }}</b>
+        {% if p.price %} | Price: {{ p.price }}{% endif %}
+        {% if p.created_at %} | <i>{{ p.created_at|date:"d M Y H:i" }}</i>{% endif %}
+        {% if p.is_featured %} | <b>Featured</b>{% endif %}
+      </p>
+
+      {% if p.thumbnail %}
+        <img src="{{ p.thumbnail }}" alt="thumbnail" width="150" height="100"><br />
+      {% endif %}
+
+      {% if p.description %}
+        <p>{{ p.description|truncatewords:25 }}...</p>
+      {% endif %}
+
+      <p>
+        <a href="{% url 'main:show_product' p.id %}">
+          <button>View Detail</button>
+        </a>
+      </p>
+    </div>
+
+    <hr>
+  {% endfor %}
+
+{% endif %}
