@@ -64,3 +64,56 @@ Django dijadikan framework awal karena lengkap dan terstruktur. Banyak fitur yan
 
 ## Feedback untuk Asdos Tutorial 1
 -
+
+## Fungsi data delivery alam pengimplementasian sebuah platform
+Kita memerlukan data delivery dalam sebuah platform karena setiap aplikasi seringkali membutuhkan cara yang berbeda untuk mengakses dan menggunakan data. Misalnya, pengguna biasa membutuhkan tampilan data dalam bentuk HTML agar mudah dibaca di browser, sementara aplikasi lain atau layanan eksternal mungkin membutuhkan data mentah dalam format JSON atau XML untuk diproses lebih lanjut. Dengan adanya data delivery, data dapat dibagikan dengan fleksibel sesuai kebutuhan, sehingga platform menjadi lebih mudah diintegrasikan, lebih efisien, dan bisa digunakan di berbagai perangkat atau sistem.
+
+## Mana yang lebih baik antara XML dan JSON? Mengapa JSON lebih populer dibandingkan XML?
+Secara umum, JSON dianggap lebih baik dibandingkan XML untuk kebutuhan pertukaran data modern. Hal ini karena JSON lebih sederhana, lebih mudah dibaca manusia, dan ukurannya lebih ringan sehingga lebih cepat diproses. JSON juga terintegrasi dengan baik pada hampir semua bahasa pemrograman, terutama JavaScript yang menjadi dasar pengembangan web. XML memang memiliki kelebihan dalam hal struktur yang ketat dan dukungan untuk dokumen yang kompleks, tetapi sering kali terasa terlalu berat dan bertele-tele untuk kebutuhan aplikasi web atau mobile. 
+
+## Fungsi method is_valid() pada form Django
+Method is_valid() pada form Django berfungsi untuk memeriksa apakah data yang dimasukkan ke dalam form sudah sesuai dengan aturan dan tipe data yang ditentukan di model atau form itu sendiri. Misalnya, kalau sebuah field harus angka tapi user mengisi teks, maka is_valid() akan mengembalikan false. Dengan begitu, kita bisa mencegah data yang salah atau tidak lengkap tersimpan ke database. Method ini penting karena membantu menjaga konsistensi dan keakuratan data, serta membuat aplikasi lebih aman dan terkontrol.
+
+## Fungsi csrf_token
+Kita membutuhkan csrf_token pada form Django untuk melindungi aplikasi dari serangan CSRF (Cross-Site Request Forgery). Token ini berfungsi sebagai tanda pengenal unik yang memastikan bahwa permintaan form benar-benar berasal dari pengguna yang sah, bukan dari pihak luar. Jika csrf_token tidak ditambahkan, penyerang bisa memanfaatkan celah ini dengan membuat halaman berbahaya yang diam-diam mengirim permintaan ke server kita menggunakan akun pengguna yang sedang login. Akibatnya, penyerang bisa melakukan aksi tanpa izin, seperti mengubah data atau mengirim informasi penting. Dengan adanya csrf_token, Django dapat memverifikasi setiap permintaan form dan mencegah serangan tersebut.
+
+## Step-by-step Implementasi Checklist
+1. Buat templates/base.html di root project (satu level dengan manage.py) sebagai layout utama.
+2. Konfigurasi settings.py: TEMPLATES['DIRS'] = [BASE_DIR / 'templates'] dan  APP_DIRS=True.
+3. Model: pakai Product di main/models.py (name, price, description, thumbnail (URL), category, is_featured).
+4. Form: buat main/forms.py: ProductForm (ModelForm) dengan fields: ["name","price","description","thumbnail","category","is_featured"].
+5. Views (main/views.py)
+    show_main: ambil Product.objects.all() dan kirim ke template.
+    create_product: tampilkan form (GET) & simpan produk baru (POST) dengan is_valid(), lalu redirect ke list.
+    show_product(id): ambil 1 produk by PK dan render halaman detail.
+6. Templates
+    main/templates/main.html: tampilkan daftar produk, tombol “+ Add Product” dan tombol/link “View Detail”
+    main/templates/create_product.html: form tambah produk, pakai {% csrf_token %} untuk keamanan CSRF.
+    main/templates/product_detail.html: tampilkan field produk (name, price, category, is_featured, thumbnail, description).
+7. Data Delivery: XML & JSON 
+    Imports di main/views.py: from django.http import HttpResponse dan from django.core import serializers.
+    show_xml: Product.objects.all() ke XML + content_type="application/xml".
+    show_json: Product.objects.all() ke JSON + content_type="application/json".
+    show_xml_by_id(id): Product.objects.get(pk=id), content_type="application/xml".
+    show_json_by_id(id): sama seperti XML, tapi "json".
+8. Routing URL
+main/urls.py:
+
+app_name = 'main'
+urlpatterns = [
+    path('', show_main, name='show_main'),
+    path('create-product/', create_product, name='create_product'),
+    path('product/<int:id>/', show_product, name='show_product'),
+    path('xml/', show_xml, name='show_xml'),
+    path('json/', show_json, name='show_json'),
+    path('xml/<int:id>/', show_xml_by_id, name='show_xml_by_id'),
+    path('json/<int:id>/', show_json_by_id, name='show_json_by_id'),
+]
+9. Jalanin server: python manage.py runserver.
+
+## Feedback untuk Asdos Tutorial 2
+tidak ada
+
+## screenshot postman
+![alt text](image-1.png)
+![alt text](<Screenshot 2025-09-16 at 20.42.30.png>) ![alt text](<Screenshot 2025-09-16 at 20.42.23.png>) ![alt text](<Screenshot 2025-09-16 at 20.41.15.png>)

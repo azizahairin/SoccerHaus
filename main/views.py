@@ -47,7 +47,7 @@ def show_json(request):
 def show_xml_by_id(request, id):
     try:
         obj = Product.objects.get(pk=id)
-        xml_data = serializers.serialize("xml", [obj])  # bungkus list
+        xml_data = serializers.serialize("xml", [obj])  
         return HttpResponse(xml_data, content_type="application/xml")
     except Product.DoesNotExist:
         return HttpResponse(status=404)
@@ -55,7 +55,7 @@ def show_xml_by_id(request, id):
 def show_json_by_id(request, id):
     try:
         obj = Product.objects.get(pk=id)
-        json_data = serializers.serialize("json", [obj])  # bungkus list
+        json_data = serializers.serialize("json", [obj])  
         return HttpResponse(json_data, content_type="application/json")
     except Product.DoesNotExist:
         return HttpResponse(status=404)
