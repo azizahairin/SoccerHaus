@@ -3,6 +3,7 @@ from django.core import serializers
 from django.shortcuts import render, redirect, get_object_or_404
 from main.forms import ProductForm
 from main.models import Product
+from django.views.decorators.http import require_POST
 
 def show_main(request):
     products = Product.objects.all()
@@ -59,3 +60,9 @@ def show_json_by_id(request, id):
         return HttpResponse(json_data, content_type="application/json")
     except Product.DoesNotExist:
         return HttpResponse(status=404)
+    
+@require_POST 
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    product.delete()
+    return redirect('main:show_main')

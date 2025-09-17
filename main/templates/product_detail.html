@@ -14,4 +14,12 @@
 
 <p>{{ product.description }}</p>
 
+<hr>
+
+<form action="{% url 'main:delete_product' product.id %}" method="post"
+      onsubmit="return confirm('Yakin hapus produk ini?');">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>
+
 {% endblock content %}
