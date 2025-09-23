@@ -104,3 +104,68 @@ tidak ada
 ## screenshot postman
 ![alt text](image-1.png)
 ![alt text](<Screenshot 2025-09-16 at 20.42.30.png>) ![alt text](<Screenshot 2025-09-16 at 20.42.23.png>) ![alt text](<Screenshot 2025-09-16 at 20.41.15.png>)
+
+## Apa itu Django AuthenticationForm
+AuthenticationForm adalah form bawaan Django yang dipakai untuk proses login.
+Form ini sudah menyediakan field username dan password, lalu otomatis memeriksa apakah data yang dimasukkan sesuai dengan data user di database Django (model User).
+### Kekurangan:
+- Kurang fleksibel jika butuh field tambahan
+- Tampilan default sederhana
+- Pesan error standar, jadi mungkin perlu dikustomisasi
+### Kelebihan:
+- Mudah dipakai
+- Sudah terhubung dengan sistem Django Auth
+- Validasi Otomatis
+
+## Perbedaan antara autentikasi dan otorisasi
+Autentikasi adalah proses untuk memastikan identitas seseorang yang ingin mengakses suatu sistem. Dalam konteks Django, autentikasi dilakukan dengan cara memeriksa data login seperti username dan password melalui mekanisme bawaan Django. Jika data yang dimasukkan sesuai dengan data yang tersimpan dalam basis data pengguna, maka pengguna dianggap valid dan Django akan membuat sesi sehingga pengguna tersebut dikenali sebagai request.user. Django menyediakan komponen seperti authenticate(), login(), serta middleware khusus yang menangani status autentikasi ini. Dengan demikian, autentikasi di Django berfungsi untuk menjawab pertanyaan: “Siapa pengguna ini?”
+Otorisasi adalah proses untuk menentukan hak akses yang dimiliki oleh pengguna setelah identitasnya berhasil diverifikasi. Dalam Django, otorisasi diwujudkan melalui sistem izin (permissions) dan peran pengguna (user roles). Secara bawaan, setiap model di Django memiliki izin dasar seperti add, change, delete, dan view yang dapat diberikan kepada pengguna tertentu atau dikelompokkan melalui group. Django juga menyediakan atribut khusus seperti is_staff dan is_superuser untuk membedakan tingkat akses. Proses pemeriksaan izin dapat dilakukan dengan metode has_perm(), dekorator seperti @login_required atau @permission_required, serta mixin pada class-based view. Dengan demikian, otorisasi berfungsi untuk menjawab pertanyaan: “Apa yang boleh dilakukan pengguna ini?”
+
+## Kelebihan dan kekurangan session dan cookies dalam konteks menyimpan state di aplikasi web
+### Cookies
+Cookies adalah data kecil yang disimpan langsung di sisi klien (browser). Cookies biasanya dipakai untuk menyimpan informasi sederhana seperti preferensi tampilan, data login otomatis , atau pengenal unik untuk pelacakan.
+##### Kelebihan cookies:
+- Mudah diakses oleh browser 
+- Tidak membebani server karena data tidak disimpan di sisi server.
+- Bisa digunakan lintas request
+#### Kekurangan cookies:
+- Rentan keamanan
+- Ukuran terbatas 
+- Bergantung pada user
+### Sessions
+Session adalah mekanisme penyimpanan data pengguna di sisi server. Browser hanya menyimpan sebuah session ID (biasanya di dalam cookie), sementara data detail pengguna tetap tersimpan di server.
+#### Kelebihan session:
+- Data sensitif tidak disimpan di user, hanya ID yang dikirim ke browser.
+- Bisa menyimpan data lebih besar 
+- Pengguna tidak bisa dengan mudah mengubah data karena kontrol penuh ada di server.
+#### Kekurangan session:
+- Membebani server karena semua data pengguna harus disimpan di server, terutama jika jumlah user sangat banyak.
+- Bergantung pada cookies atau URL rewriting.
+- Server perlu mengatur kapan session dibuat, diperbarui, atau dihapus.
+
+## Apakah penggunaan cookies aman secara default dalam pengembangan web, atau apakah ada risiko potensial yang harus diwaspadai? Bagaimana Django menangani hal tersebut?
+Penggunaan cookies tidak sepenuhnya aman secara default karena cookies pada dasarnya adalah data yang tersimpan di sisi klien (browser), sehingga berpotensi diakses, dimodifikasi, atau dicuri oleh pihak yang tidak berwenang. Risiko utama dari cookies antara lain adalah session hijacking (pencurian identitas sesi pengguna), cross-site scripting (XSS) di mana penyerang bisa menyuntikkan skrip berbahaya untuk membaca cookies, dan cross-site request forgery (CSRF) di mana cookies dipakai tanpa sepengetahuan pengguna. Selain itu, karena cookies selalu dikirim bersama setiap permintaan HTTP, ada kemungkinan data sensitif ikut terbawa jika tidak dikonfigurasi dengan benar.
+
+Untuk mengurangi risiko ini, Django menyediakan beberapa mekanisme pengamanan cookies secara bawaan. Django menandai cookies penting seperti sessionid dengan atribut HttpOnly, sehingga cookies tidak bisa diakses melalui JavaScript dan lebih terlindungi dari serangan XSS. Django juga mendukung penggunaan atribut Secure, yang memastikan cookies hanya dikirim melalui koneksi HTTPS sehingga tidak mudah disadap. Selain itu, Django memiliki pengaturan CSRF protection yang otomatis melindungi form dari penyalahgunaan cookies pada permintaan berbahaya. Dengan demikian, penggunaan cookies bisa relatif aman selama dikombinasikan dengan konfigurasi keamanan yang tepat. Namun, pengembang tetap perlu berhati-hati, misalnya dengan menghindari penyimpanan data sensitif secara langsung di cookies, mengaktifkan opsi keamanan Django seperti SESSION_COOKIE_SECURE, SESSION_COOKIE_HTTPONLY, dan CSRF_COOKIE_SECURE, serta selalu menggunakan HTTPS untuk komunikasi data.
+
+## Step-by-step Implementasi Checklist Tugas 4
+1. Buka views.py dan tambahkan fungsi register, login, dan logout.
+2. Tambahkan import yang diperlukan di views.py
+3. Buat berkas html baru untuk register dan login.
+4. Tambahkan button logout di main.html
+5. Import fungsi register, login, dan logout di urls.py
+6. Tambahkan path url ke dalam urlpatterns untuk mengakses fungsi yang
+sudah diimpor tadi.
+7. Tambahkan import login_required pada bagian paling atas di views.py
+8. Tambahkan @login_required(login_url='/login') di atas fungsi show_main dan show_product untuk mengimplementasikan decorator.
+9. Tambahkan import HttpResponseRedirect, reverse, dan datetime di views.py
+10. tambahkan 'last_login': request.COOKIES['last_login'] ke dalam variabel context yang ada di show_main views.py
+11. Ubah fungsi logout_user untuk menghapus cookie last_login setelah melakukan logout.
+12. Hubungkan tiap object product dengan pengguna yang membuatnya, ubah di models.py 
+13. Jalankan python manage.py makemigrations dan python manage.py migrate.
+14. ubah fungsi cretae_product yang ada di views.py agar dapat mengisi field user dengan nilai request.user, yaitu pengguna yang sedang login.
+15. modifikasi fungsi show_main untuk menampilkan halaman utama setelah user login dan dilengkapi dengan filter artikel berdasarkan penulis
+16. Tambahkan tombol filter my dan all pada main.html
+17. Tambahkan nama author di product_detail.html
+
+

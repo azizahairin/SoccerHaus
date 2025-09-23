@@ -43,7 +43,7 @@ def create_product(request):
     return render(request, "create_product.html", context)
 
 @login_required(login_url='/login')
-def show_product(request):
+def show_product(request, id):
     product = get_object_or_404(Product, pk=id)
 
     context = {
