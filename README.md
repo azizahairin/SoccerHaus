@@ -168,4 +168,5 @@ sudah diimpor tadi.
 16. Tambahkan tombol filter my dan all pada main.html
 17. Tambahkan nama author di product_detail.html
 
+##  urutan prioritas pengambilan CSS selector
 

@@ -13,21 +13,33 @@ import datetime
 
 @login_required(login_url='/login')
 def show_main(request):
-    filter_type = request.GET.get("filter", "all")  
+    filter_type = request.GET.get("filter", "all")
+    category = request.GET.get("category")  # <-- NEW
 
-    if filter_type == "all":
-        products = Product.objects.all()
-    
+    # base queryset
+    if filter_type == "my":
+        products = Product.objects.filter(user=request.user)
     else:
-        products = Product.objects.filter(user = request.user)
+        products = Product.objects.all()
+
+    # apply category filter if provided
+    if category:
+        products = products.filter(category=category)
 
     context = {
         'name': 'Azizah Khairinniswah',
         'class': 'PBP F',
-        "products": products,
-        'last_login': request.COOKIES.get('last_login', 'Never')
+        'products': products,
+        'last_login': request.COOKIES.get('last_login', 'Never'),
+        # kirim pilihan kategori utk dirender tombol
+        'CATEGORY_CHOICES': [
+            ('jersey', 'Jersey'),
+            ('shoes', 'Shoes'),
+            ('ball', 'Ball'),
+            ('accessories', 'Accessories'),
+            ('equipment', 'Equipment'),
+        ],
     }
-
     return render(request, "main.html", context)
 
 def create_product(request):
@@ -79,10 +91,12 @@ def show_json_by_id(request, id):
     except Product.DoesNotExist:
         return HttpResponse(status=404)
     
-@require_POST 
+@login_required(login_url='/login')
+@require_POST
 def delete_product(request, id):
-    product = get_object_or_404(Product, pk=id)
+    product = get_object_or_404(Product, pk=id, user=request.user)
     product.delete()
+    messages.success(request, "Product berhasil dihapus.")
     return redirect('main:show_main')
 
 def register(request):
@@ -118,3 +132,14 @@ def logout_user(request):
     response = HttpResponseRedirect(reverse('main:login'))
     response.delete_cookie('last_login')
     return response
+
+def edit_product(request, id) :
+    product = get_object_or_404(Product, pk=id)
+    form = ProductForm(request.POST or None, instance=product)
+
+    if form.is_valid() and request.method == "POST":
+        form.save()
+        return redirect('main:show_main')
+
+    context = {'form': form}
+    return render(request, "edit_product.html", context)

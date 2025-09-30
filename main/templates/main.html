@@ -1,60 +1,77 @@
-<h1>SoccerHaus</h1>
 
-<h5>Name:</h5>
-<p>{{ name }}</p>
+{% extends 'base.html' %}
+{% load static %}
 
-<h5>Class:</h5>
-<p>{{ class }}</p>
+{% block meta %}
+<title>SoccerHaus</title>
+{% endblock meta %}
 
-<a href="{% url 'main:create_product' %}">
-  <button>+ Add Product</button>
-</a>
-<a href="{% url 'main:logout' %}">
-  <button>Logout</button>
-</a>
-<h5>Sesi terakhir login: {{ last_login }}</h5>
-<hr>
+{% block content %}
+{% include 'navbar.html' %}
+<div class="bg-[var(--brand-pink)] w-full min-h-screen pt-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-<a href="?filter=all">
-  <button type="button">All Articles</button>
-</a>
-<a href="?filter=my">
-  <button type="button">My Articles</button>
-</a> 
+  <!-- Header & Filter -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-[#3F5A83] mb-2">Latest Products</h1>
+    <p class="text-[#3F5A83]/80 mb-4">Browse the newest items from the community</p>
 
-{% if not products %}
-  <p>Belum ada data produk pada SoccerHaus.</p>
-{% else %}
-
-  {% for p in products %}
-    <div>
-      <h2>
-        <a href="{% url 'main:show_product' p.id %}">{{ p.name }}</a>
-      </h2>
-
-      <p>
-        <b>{{ p.get_category_display }}</b>
-        {% if p.price %} | Price: {{ p.price }}{% endif %}
-        {% if p.created_at %} | <i>{{ p.created_at|date:"d M Y H:i" }}</i>{% endif %}
-        {% if p.is_featured %} | <b>Featured</b>{% endif %}
-      </p>
-
-      {% if p.thumbnail %}
-        <img src="{{ p.thumbnail }}" alt="thumbnail" width="150" height="100"><br />
-      {% endif %}
-
-      {% if p.description %}
-        <p>{{ p.description|truncatewords:25 }}...</p>
-      {% endif %}
-
-      <p>
-        <a href="{% url 'main:show_product' p.id %}">
-          <button>View Detail</button>
-        </a>
-      </p>
+    <!-- Filter -->
+    <div class="flex space-x-3">
+      <a href="?"
+         class="{% if request.GET.filter == 'all' or not request.GET.filter %} bg-[#3F5A83] text-white {% else %} bg-white text-[#3F5A83] border border-[#3F5A83] {% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-[#2d4264] hover:text-white">
+        All Products
+      </a>
+    
+      <a href="?filter=my"
+         class="{% if request.GET.filter == 'my' %} bg-[#3F5A83] text-white {% else %} bg-white text-[#3F5A83] border border-[#3F5A83] {% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-[#2d4264] hover:text-white">
+        My Products
+      </a>
     </div>
+  </div>
 
-    <hr>
-  {% endfor %}
+  <!-- Products Box -->
+  <div class="bg-[var(--brand-blue)] text-white rounded-2xl p-6 shadow">
 
-{% endif %}
+    <!-- Products Grid -->
+    {% if not products %}
+      {% if request.GET.filter == 'my' %}
+        <!-- Kosong untuk My Products: pakai gambar + tombol Create -->
+        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div class="w-32 h-32 mx-auto mb-4">
+            <img src="{% static 'image/no-products.png' %}"
+                alt="No products available"
+                class="w-full h-full object-contain">
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+          <p class="text-gray-500 mb-6">You don’t have any products yet.</p>
+          <a href="{% url 'main:create_product' %}"
+            class="inline-flex items-center px-4 py-2 bg-[var(--brand-blue)] text-white rounded-md hover:brightness-95 transition-colors">
+            Create Product
+          </a>
+        </div>
+
+      {% elif request.GET.category %}
+        <!-- Kosong untuk kategori: tanpa tombol -->
+        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No products in this category</h3>
+          <p class="text-gray-500">Tidak ada produk di kategori ini.</p>
+        </div>
+
+      {% else %}
+        <!-- Kosong umum: tanpa tombol -->
+        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+          <p class="text-gray-500">Belum ada produk yang terdaftar.</p>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in products %}
+          {% include 'card_product.html' with product=product %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}
