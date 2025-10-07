@@ -1,51 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen bg-[var(--brand-pink)] flex flex-col justify-center items-center px-4">
+<div class="min-h-screen bg-[#F6F4EF] flex flex-col justify-center items-center px-4">
 
-  <!-- Logo / Brand -->
-  <div class="bg-[#3F5A83] text-[#E8E2D4] font-bold text-3xl md:text-4xl px-8 py-3 rounded-full shadow-md mb-6">
+  <div class="bg-[#1F2A44] text-white font-bold text-3xl md:text-4xl px-8 py-3 rounded-full shadow-md mb-6">
     SoccerHaus
   </div>
 
-  <!-- Register Box -->
-  <div class="w-full max-w-md bg-[#E8E2D4] rounded-2xl shadow-lg p-8">
-    <h2 class="text-2xl font-bold text-[#3F5A83] mb-1">Join Us</h2>
-    <p class="text-sm text-[#3F5A83]/80 mb-6">Create your SoccerHaus account</p>
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-md border border-gray-100 p-8">
+    <h2 class="text-2xl font-extrabold text-[#1F2A44] mb-1">Join Us</h2>
+    <p class="text-sm text-[#1F2A44]/70 mb-6">Create your SoccerHaus account</p>
 
-    <form method="POST" action="">
+    <form id="register-form" method="POST" action="" data-register-url="{% url 'main:register_ajax' %}">
       {% csrf_token %}
 
       <div class="mb-4">
-        <label for="username" class="block text-sm font-medium text-[#3F5A83] mb-1">Username</label>
+        <label for="username" class="block text-sm font-medium text-[#1F2A44] mb-1">Username</label>
         <input id="username" name="username" type="text" placeholder="Choose a username"
-               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#3F5A83] focus:outline-none">
+               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#1F2A44] focus:outline-none">
       </div>
 
       <div class="mb-4">
-        <label for="password1" class="block text-sm font-medium text-[#3F5A83] mb-1">Password</label>
+        <label for="password1" class="block text-sm font-medium text-[#1F2A44] mb-1">Password</label>
         <input id="password1" name="password1" type="password" placeholder="Create a password"
-               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#3F5A83] focus:outline-none">
+               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#1F2A44] focus:outline-none">
       </div>
 
-      <div class="mb-6">
-        <label for="password2" class="block text-sm font-medium text-[#3F5A83] mb-1">Confirm Password</label>
+      <div class="mb-2">
+        <label for="password2" class="block text-sm font-medium text-[#1F2A44] mb-1">Confirm Password</label>
         <input id="password2" name="password2" type="password" placeholder="Confirm your password"
-               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#3F5A83] focus:outline-none">
+               class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#1F2A44] focus:outline-none">
       </div>
 
-      <button type="submit"
-              class="w-full bg-[#3F5A83] hover:bg-[#324666] text-[#E8E2D4] font-semibold py-2 rounded-md transition-colors">
+      <div id="reg-errors" class="hidden mt-3 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm p-3"></div>
+
+      <button type="submit" id="btn-register"
+              class="w-full bg-[#1F2A44] hover:brightness-110 text-white font-semibold py-2 rounded-md transition-colors mt-4">
         Create Account
       </button>
     </form>
 
-    <p class="mt-6 text-center text-sm text-[#3F5A83]">
+    <p class="mt-6 text-center text-sm text-[#1F2A44]">
       Already have an account?
-      <a href="{% url 'main:login' %}" class="font-semibold hover:underline text-[#3F5A83]">
+      <a href="{% url 'main:login' %}" class="font-semibold hover:underline text-[#1F2A44]">
         Sign In
       </a>
     </p>
+
+    <div class="mt-4 text-center">
+      <button type="button"
+        class="px-4 py-2 rounded-md font-medium bg-white text-[#1F2A44] border border-[#1F2A44]/40 hover:bg-[#1F2A44] hover:text-white transition"
+        onclick="showToast('Heads up', 'This is a sample toast.')">
+        Click to Show Toast
+      </button>
+    </div>
   </div>
 </div>
+
+<!-- Toast -->
+<div id="toast-wrap" class="fixed bottom-6 right-6 space-y-2 z-[60]"></div>
+<script>
+  function showToast(title, message='', type='info') {
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    const colors = { success:'bg-green-600', error:'bg-red-600', info:'bg-gray-800', warn:'bg-yellow-600' };
+    el.className = `${colors[type]||colors.info} text-white rounded-lg shadow-lg px-4 py-3 max-w-xs`;
+    el.innerHTML = `<div class="font-semibold">${title}</div>${message?`<div class="text-sm opacity-90 mt-0.5">${message}</div>`:''}`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.remove(), 280); }, 2200);
+  }
+</script>
+<script>
+  function getCsrf(){
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  const form = document.getElementById('register-form');
+  const box  = document.getElementById('reg-errors');
+  const btn  = document.getElementById('btn-register');
+
+  function setErr(html){ if(!html){box.classList.add('hidden'); box.innerHTML=''; return;} box.classList.remove('hidden'); box.innerHTML=html; }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Creating...'; setErr('');
+    try{
+      const url = form.dataset.registerUrl;
+      const fd  = new FormData(form);
+      const res = await fetch(url, { method:'POST', headers:{ 'X-CSRFToken': getCsrf() }, body: fd });
+      const txt = await res.text(); let data=null; try{ data=JSON.parse(txt) }catch(_){}
+      if(!res.ok || !data?.ok){
+        let msg = 'Registration failed.'; if(data?.errors){ msg = Object.values(data.errors).flat().join('<br>'); }
+        setErr(`<p>${msg}</p>`); showToast('Register Failed', 'Please fix the errors and try again.', 'error'); return;
+      }
+      showToast('Account Created', 'You can now sign in.', 'success');
+      setTimeout(()=> window.location.href = "{% url 'main:login' %}", 450);
+    }catch(err){
+      console.error(err); setErr('<p>Network error. Try again.</p>'); showToast('Network Error', '', 'error');
+    }finally{
+      btn.disabled = false; btn.textContent = prev;
+    }
+  });
+</script>
 {% endblock %}

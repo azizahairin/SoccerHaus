@@ -272,6 +272,21 @@ Urutannya bisa dibayangkan seperti lapisan: **isi → padding → border → mar
 12. Finishing
     - Rapikan spacing (jarak header–konten), kontras teks pada background, dan konsistensi warna tombol/badge sesuai palet pink–beige–blue.
 
+## Perbedaan synchronous request dan asynchronous request
+Synchronous berarti permintaan diproses satu per satu dan halaman biasanya melakukan reload penuh. Selama menunggu respons, pengguna “terkunci” (tidak bisa berinteraksi dengan hasilnya). Asynchronous (AJAX) mengirim permintaan di belakang layar lewat JavaScript tanpa reload halaman. Respons yang datang (biasanya JSON) dipakai untuk mengubah sebagian DOM saja, sehingga halaman terasa lebih cepat dan interaktif.
+
+## Bagaimana AJAX bekerja di Django (alur request–response)
+Pengguna menekan tombol/submit form → JavaScript menjalankan fetch() (atau XHR) ke URL Django → URL itu dipetakan ke views.py lewat urls.py → view memproses data (validasi, akses DB) lalu mengembalikan respons JSON (JsonResponse) → JavaScript membaca JSON dan memperbarui tampilan (misalnya menambah kartu produk, menutup modal, menampilkan toast) tanpa reload. Untuk permintaan POST, token CSRF ikut dikirim (via <input name="csrfmiddlewaretoken"> atau header X-CSRFToken) supaya Django menerimanya.
+
+## Keuntungan menggunakan AJAX dibanding render biasa di Django
+AJAX membuat aplikasi terasa lebih cepat karena hanya bagian tertentu yang diperbarui, bukan seluruh halaman. Bandwidth lebih hemat, pengalaman pengguna lebih mulus (tidak ada “kedip” reload), dan kita bisa menampilkan loading/empty/error state serta toast secara instan. Di sisi kode, pemisahan “data” (JSON dari view) dan “tampilan” (render di JS) memudahkan kita membangun UI yang reaktif.
+
+## Keamanan saat menggunakan AJAX untuk Login dan Register di Django
+Gunakan HTTPS agar kredensial terenkripsi; kirim permintaan POST dengan CSRF token (Django wajib), dan lakukan validasi di server memakai form/auth Django—jangan hanya mengandalkan validasi di sisi klien. Jangan menyimpan password atau token sensitif di localStorage; biarkan Django memakai session cookie (HttpOnly, Secure). Batasi informasi pada respons (pesan error jangan terlalu detail), gunakan @require_POST pada endpoint auth, dan aktifkan throttle/lockout bila perlu. Seluruh input harus disanitasi/di-clean di server.
+
+## Dampak AJAX terhadap User Experience (UX)
+UX jadi lebih responsif: aksi instan, ada indikator loading, empty, dan error, serta notifikasi toast yang jelas. Modal untuk create/update membuat alur tetap di tempat (tidak terlempar ke halaman lain), dan tombol refresh bisa memuat data terbaru tanpa memecah fokus pengguna. Singkatnya, interaksi lebih halus dan konsisten dibanding proses render penuh.
+
 
 
 

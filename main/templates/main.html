@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% load static %}
 
@@ -8,70 +7,640 @@
 
 {% block content %}
 {% include 'navbar.html' %}
-<div class="bg-[var(--brand-pink)] w-full min-h-screen pt-24">
+
+<!-- Cream background, lebih retail-feel -->
+<div class="bg-[#F6F4EF] w-full min-h-screen pt-24">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <!-- Header & Filter -->
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-[#3F5A83] mb-2">Latest Products</h1>
-    <p class="text-[#3F5A83]/80 mb-4">Browse the newest items from the community</p>
+    <!-- Header & Actions -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-extrabold tracking-tight text-[#1F2A44] mb-1">Latest Products</h1>
+      <p class="text-[#1F2A44]/70 mb-4">Browse the newest items from the community</p>
 
-    <!-- Filter -->
-    <div class="flex space-x-3">
-      <a href="?"
-         class="{% if request.GET.filter == 'all' or not request.GET.filter %} bg-[#3F5A83] text-white {% else %} bg-white text-[#3F5A83] border border-[#3F5A83] {% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-[#2d4264] hover:text-white">
-        All Products
-      </a>
-    
-      <a href="?filter=my"
-         class="{% if request.GET.filter == 'my' %} bg-[#3F5A83] text-white {% else %} bg-white text-[#3F5A83] border border-[#3F5A83] {% endif %} px-4 py-2 rounded-md font-medium transition-colors hover:bg-[#2d4264] hover:text-white">
-        My Products
-      </a>
-    </div>
-  </div>
+      <!-- Last login text -->
+      <p class="text-sm text-gray-500 mb-3" id="last-login">
+        Last login: {{ last_login|default:"Never" }}
+      </p>
+      
+      <!-- Actions row -->
+      <div class="flex items-center gap-3">
+        <!-- Create (open modal) -->
+        <button onclick="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 rounded-lg font-semibold transition-colors
+                 bg-[#1F2A44] text-white hover:brightness-110 shadow-sm">
+          Create Product by AJAX
+        </button>
 
-  <!-- Products Box -->
-  <div class="bg-[var(--brand-blue)] text-white rounded-2xl p-6 shadow">
+        <!-- Filter buttons (outline navy) -->
+        <a id="filter-all" href="?filter=all"
+           class="px-4 py-2 rounded-lg font-medium transition-colors bg-white text-[#1F2A44] border border-[#1F2A44]/50 hover:bg-[#1F2A44] hover:text-white">
+          All Products
+        </a>
 
-    <!-- Products Grid -->
-    {% if not products %}
-      {% if request.GET.filter == 'my' %}
-        <!-- Kosong untuk My Products: pakai gambar + tombol Create -->
-        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div class="w-32 h-32 mx-auto mb-4">
-            <img src="{% static 'image/no-products.png' %}"
-                alt="No products available"
-                class="w-full h-full object-contain">
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-          <p class="text-gray-500 mb-6">You don’t have any products yet.</p>
-          <a href="{% url 'main:create_product' %}"
-            class="inline-flex items-center px-4 py-2 bg-[var(--brand-blue)] text-white rounded-md hover:brightness-95 transition-colors">
-            Create Product
-          </a>
-        </div>
+        <a id="filter-my" href="?filter=my"
+           class="px-4 py-2 rounded-lg font-medium transition-colors bg-white text-[#1F2A44] border border-[#1F2A44]/50 hover:bg-[#1F2A44] hover:text-white">
+          My Products
+        </a>
 
-      {% elif request.GET.category %}
-        <!-- Kosong untuk kategori: tanpa tombol -->
-        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No products in this category</h3>
-          <p class="text-gray-500">Tidak ada produk di kategori ini.</p>
-        </div>
-
-      {% else %}
-        <!-- Kosong umum: tanpa tombol -->
-        <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-          <p class="text-gray-500">Belum ada produk yang terdaftar.</p>
-        </div>
-      {% endif %}
-    {% else %}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for product in products %}
-          {% include 'card_product.html' with product=product %}
-        {% endfor %}
+        <!-- Refresh via AJAX -->
+        <button id="btn-refresh"
+          class="inline-flex items-center px-4 py-2 rounded-lg font-semibold transition-colors
+                 bg-white text-[#1F2A44] border border-[#1F2A44]/50 hover:bg-[#1F2A44] hover:text-white">
+          Refresh
+        </button>
       </div>
-    {% endif %}
+    </div>
+
+    <!-- NAVY PANEL -->
+    <div id="server-grid-box" class="bg-[#263B5A] text-white rounded-2xl p-6 shadow-md">
+
+      <!-- AJAX states -->
+      <div id="loading" class="bg-white rounded-xl border border-gray-200 p-12 text-center hidden" aria-live="polite">
+        <svg class="animate-spin h-8 w-8 text-[#1F2A44] inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <p class="text-gray-700 mt-3">Loading products...</p>
+      </div>
+
+      <div id="error" class="hidden" aria-live="polite"></div>
+
+      <!-- Grid diisi AJAX -->
+      <div id="grid" class="hidden"></div>
+
+      <!-- Empty state -->
+      <div id="empty" class="bg-white rounded-xl border border-gray-200 p-12 text-center hidden"></div>
+
+      <!-- Fallback server-rendered (disembunyikan saat AJAX sukses) -->
+      <div id="server-rendered">
+        {% if not products %}
+          {% if request.GET.filter == 'my' %}
+            <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div class="w-32 h-32 mx-auto mb-4">
+                <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+              <p class="text-gray-500 mb-6">You don’t have any products yet.</p>
+              <button type="button" onclick="openCreateModal()"
+                 class="inline-flex items-center px-4 py-2 bg-[#1F2A44] text-white rounded-lg hover:brightness-110 transition-colors">
+                Create Product
+              </button>
+            </div>
+          {% elif request.GET.category %}
+            <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">No products in this category</h3>
+              <p class="text-gray-500">Tidak ada produk di kategori ini.</p>
+            </div>
+          {% else %}
+            <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div class="w-32 h-32 mx-auto mb-4">
+                <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+              <p class="text-gray-500 mb-6">Be the first to add a product.</p>
+              <button type="button" onclick="openCreateModal()"
+                 class="inline-flex items-center px-4 py-2 bg-[#1F2A44] text-white rounded-lg hover:brightness-110 transition-colors">
+                Create Product
+              </button>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for product in products %}
+              {% include 'card_product.html' with product=product %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- /NAVY PANEL -->
   </div>
 </div>
+
+<!-- ========================= -->
+<!--  TOAST (lightweight)     -->
+<!-- ========================= -->
+<div id="toast-wrap" class="fixed bottom-6 right-6 space-y-2 z-[60]"></div>
+<script>
+  function showToast(title, message='', type='info') {
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    const colors = {
+      success: 'bg-green-600',
+      error:   'bg-red-600',
+      info:    'bg-gray-800',
+      warn:    'bg-yellow-600'
+    };
+    el.className = `${colors[type]||colors.info} text-white rounded-lg shadow-lg px-4 py-3 max-w-xs animate-fade-in`;
+    el.innerHTML = `<div class="font-semibold">${title}</div>${message ? `<div class="text-sm opacity-90 mt-0.5">${message}</div>` : ''}`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.remove(), 300); }, 2200);
+  }
+</script>
+<style>
+  @keyframes fade-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .animate-fade-in { animation: fade-in .18s ease-out }
+</style>
+
+<!-- ========================= -->
+<!--  MODAL: Create/Update    -->
+<!-- ========================= -->
+<div
+  id="crudModal"
+  class="hidden fixed inset-0 z-50 w-full flex items-center justify-center bg-gray-800 bg-opacity-50"
+  role="dialog" aria-modal="true"
+  data-create-url="{% url 'main:add_product_entry_ajax' %}"
+  data-update-url-template="{% url 'main:update_product_entry_ajax' 0 %}"
+  data-detail-url-template="{% url 'main:show_json_by_id' 0 %}"
+>
+  <div
+    id="crudModalContent"
+    class="bg-white rounded-lg shadow-lg w-5/6 sm:w-3/5 md:w-1/2 lg:w-2/5 xl:w-1/3 max-h-screen overflow-y-auto transition-all duration-200 transform opacity-0 scale-95"
+  >
+    <!-- Modal header -->
+    <div class="flex items-center justify-between p-4 border-b">
+      <div>
+        <h3 id="crudModalTitle" class="text-xl font-semibold text-gray-900">
+          Create New Product
+        </h3>
+        <p id="crudModalSubtitle" class="text-sm text-gray-600 mt-1">Add a new item to SoccerHaus</p>
+      </div>
+      <button type="button"
+              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+              onclick="hideModal()">
+        <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        <span class="sr-only">Close modal</span>
+      </button>
+    </div>
+
+    <!-- Modal body -->
+    <div class="px-6 py-4 space-y-6 form-style">
+      <form id="productForm">
+        <input type="hidden" id="product_id" name="id" value="">
+        {% csrf_token %}
+
+        <div class="mb-4">
+          <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+          <input type="text" id="name" name="name"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="e.g., Adidas Predator Jersey" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="price" class="block text-sm font-medium text-gray-700">Price</label>
+          <input type="number" id="price" name="price" min="0" step="1"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="e.g., 250000" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+          <textarea id="description" name="description" rows="3"
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    placeholder="Describe the product..." required></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+          <select id="category" name="category"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" required>
+            <option value="">Choose a category</option>
+            <option value="jersey">Jersey</option>
+            <option value="shoes">Shoes</option>
+            <option value="ball">Ball</option>
+            <option value="accessories">Accessories</option>
+            <option value="equipment">Equipment</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="thumbnail" class="block text-sm font-medium text-gray-700">Thumbnail URL</label>
+          <input type="url" id="thumbnail" name="thumbnail"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="https://example.com/image.jpg">
+        </div>
+
+        <div class="mb-4">
+          <div class="flex items-center">
+            <input id="is_featured" name="is_featured" type="checkbox"
+                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded">
+            <label for="is_featured" class="ml-2 text-sm font-medium text-gray-900">Featured Product</label>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal footer -->
+    <div class="flex flex-col sm:flex-row gap-4 p-6 border-t border-gray-200 rounded-b">
+      <button type="button" id="cancelButton"
+              class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors text-center"
+              onclick="hideModal()">Cancel</button>
+
+      <button type="submit" id="submitProduct" form="productForm"
+              class="order-1 sm:order-2 flex-1"
+              style="background-color:#3F5A83; color:#E8E2D4; border-radius:0.375rem; padding:0.75rem 1.5rem;">
+        Publish Product
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!--  MODAL: Confirm Delete   -->
+<!-- ========================= -->
+<div id="confirmDeleteModal" class="hidden fixed inset-0 z-50 w-full flex items-center justify-center bg-gray-800 bg-opacity-50">
+  <div class="bg-white rounded-lg shadow-lg w-11/12 sm:w-[420px] overflow-hidden">
+    <div class="p-5 border-b">
+      <h3 class="text-lg font-semibold text-gray-900">Delete Product</h3>
+      <p id="del-sub" class="text-sm text-gray-600 mt-1">Are you sure?</p>
+    </div>
+    <div class="p-5 flex flex-col sm:flex-row gap-3 justify-end">
+      <button type="button" class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50" onclick="hideDeleteModal()">Cancel</button>
+      <button type="button" id="btn-confirm-del" class="px-4 py-2 rounded-md text-white" style="background-color:#3F5A83;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========= AJAX list & grid =========
+  const PRODUCTS_API_ENDPOINT = "{% url 'main:show_json' %}";
+  const CURRENT_USER_ID = "{{ user.id|default_if_none:'' }}";
+  
+  const loadingSpinner = document.getElementById('loading');
+  const errorMessage   = document.getElementById('error');
+  const emptyState     = document.getElementById('empty');
+  const grid           = document.getElementById('grid');
+  const btnAll         = document.getElementById('filter-all');
+  const btnMy          = document.getElementById('filter-my');
+  const btnRefresh     = document.getElementById('btn-refresh');
+  const serverRendered = document.getElementById('server-rendered');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  let categoryParam = urlParams.get('category') || '';
+  let activeFilter  = (['all','my'].includes(urlParams.get('filter'))) ? urlParams.get('filter') : 'none';
+  
+  let allData = [];
+  let isRefreshing = false;
+
+  function sanitize(s) {
+    if (window.DOMPurify && DOMPurify.sanitize) return DOMPurify.sanitize(String(s));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function displaySection({ loading=false, error=false, empty=false, showGrid=false }) {
+    loadingSpinner.classList.toggle('hidden', !loading);
+    errorMessage.classList.toggle('hidden', !error);
+    emptyState.classList.toggle('hidden', !empty);
+    grid.classList.toggle('hidden', !showGrid);
+    if (showGrid) grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+    if ((empty || showGrid) && serverRendered) serverRendered.classList.add('hidden');
+  }
+  function setEmptyState(mode){
+    if (mode === 'category') {
+      emptyState.innerHTML = `
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No products in this category</h3>
+          <p class="text-gray-500">Tidak ada produk di kategori ini.</p>
+        </div>`;
+      return;
+    }
+    if (mode === 'my') {
+      emptyState.innerHTML = `
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div class="w-32 h-32 mx-auto mb-4">
+            <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+          <p class="text-gray-500 mb-6">You don't have any products yet.</p>
+          <button type="button" onclick="openCreateModal()"
+                  class="inline-flex items-center px-4 py-2 bg-[#1F2A44] text-white rounded-lg hover:brightness-110 transition-colors">
+            Create Product
+          </button>
+        </div>`;
+      return;
+    }
+    emptyState.innerHTML = `
+      <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+        <div class="w-32 h-32 mx-auto mb-4">
+          <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+        <p class="text-gray-500 mb-6">Be the first to add a product.</p>
+        <button type="button" onclick="openCreateModal()"
+                class="inline-flex items-center px-4 py-2 bg-[#1F2A44] text-white rounded-lg hover:brightness-110 transition-colors">
+          Create Product
+        </button>
+      </div>`;
+  }
+  function updateFilterButtonsAppearance() {
+    const base = 'px-4 py-2 rounded-lg font-medium transition-colors border';
+    const off  = 'bg-white text-[#1F2A44] border-[#1F2A44]/50 hover:bg-[#1F2A44] hover:text-white';
+    const on   = 'bg-[#1F2A44] text-white border-[#1F2A44]';
+    btnAll.className = `${base} ${off}`;
+    btnMy.className  = `${base} ${off}`;
+    if (categoryParam) { btnAll.setAttribute('aria-pressed','false'); btnMy.setAttribute('aria-pressed','false'); return; }
+    if (activeFilter === 'all') { btnAll.className = `${base} ${on}`; btnAll.setAttribute('aria-pressed','true'); btnMy.setAttribute('aria-pressed','false'); }
+    if (activeFilter === 'my')  { btnMy.className  = `${base} ${on}`; btnMy.setAttribute('aria-pressed','true');  btnAll.setAttribute('aria-pressed','false'); }
+  }
+  function getReadableCategoryName(code) {
+    const map = { jersey:'Jersey', shoes:'Shoes', ball:'Ball', accessories:'Accessories', equipment:'Equipment' };
+    return map[code] || code || 'Uncategorized';
+  }
+  function getCsrfToken(){
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  // ==== Build Card ====
+  function buildCard(item){
+    const article = document.createElement('article');
+    article.className = 'bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-full';
+    const detailUrl = `{% url 'main:show_product' 999999 %}`.replace('999999', item.id);
+
+    const title   = sanitize(item.title ?? '');
+    const content = sanitize(item.content ?? '');
+    const catLab  = sanitize(getReadableCategoryName(item.category ?? ''));
+    const thumb   = sanitize(item.thumbnail ?? '');
+    const isFeat  = !!item.is_featured;
+
+    const priceHtml = (item.price !== null && item.price !== undefined)
+      ? new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', maximumFractionDigits: 0 })
+          .format(Number(item.price)||0)
+      : '';
+
+    const isOwner = (CURRENT_USER_ID && String(CURRENT_USER_ID) === String(item.user_id));
+
+    const thumbHtml = item.thumbnail
+      ? `<img src="${thumb}" alt="${title}" class="w-full h-full object-cover">`
+      : `<div class="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center">
+           <span class="text-gray-400 text-sm">No Image</span>
+         </div>`;
+
+    article.innerHTML = `
+      <div class="aspect-[16/9] relative overflow-hidden">
+        ${thumbHtml}
+        <div class="absolute top-3 left-3">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-[#E7EEF6] text-[#1F2A44] border border-white/70 shadow-sm">${catLab}</span>
+        </div>
+        <div class="absolute top-3 right-3 flex items-center gap-2">
+          ${isFeat ? `<span class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-[#FDE68A] text-[#7A5E00] border border-[#F3D36C] shadow-sm">Featured</span>` : ''}
+          ${priceHtml ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white text-[#1F2A44] border border-gray-200 shadow-sm">${priceHtml}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="p-5 flex flex-col flex-1">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
+          <a href="${detailUrl}" class="hover:text-[#1F2A44] transition-colors">${title}</a>
+        </h3>
+        <p class="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">${content}</p>
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+          <a href="${detailUrl}" class="text-[#1F2A44] hover:underline font-medium text-sm">View detail</a>
+          ${isOwner ? `
+            <div class="flex items-center gap-2">
+                <button type="button" data-edit-id="${item.id}"
+                        class="px-2.5 py-1 text-xs rounded-md bg-[#E7B9C5] text-[#1F2A44] hover:brightness-110">Edit</button>
+                <button type="button" data-del-id="${item.id}" data-del-name="${title.replace(/"/g,'&quot;')}"
+                        class="px-2.5 py-1 text-xs rounded-md bg-[#1F2A44] text-white hover:brightness-110">Delete</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>`;
+    return article;
+  }
+
+  function render(items){
+    grid.innerHTML = '';
+    items.forEach(i => grid.appendChild(buildCard(i)));
+  }
+
+  function filterAndShow(){
+    updateFilterButtonsAppearance();
+    const items = (activeFilter === 'my' && !categoryParam)
+      ? allData.filter(i => String(i.user_id) === String(CURRENT_USER_ID))
+      : allData;
+
+    if (!items.length) {
+      const mode = categoryParam ? 'category' : (activeFilter === 'my' ? 'my' : 'default');
+      setEmptyState(mode);
+      displaySection({ empty:true });
+    } else {
+      render(items);
+      displaySection({ showGrid:true });
+    }
+  }
+
+  async function fetchProducts(){
+    try{
+      displaySection({ loading:true });
+      const params = new URLSearchParams();
+      if (categoryParam) params.set('category', categoryParam);
+      if (activeFilter === 'my') params.set('filter','my');
+      const url = params.toString() ? `${PRODUCTS_API_ENDPOINT}?${params}` : PRODUCTS_API_ENDPOINT;
+      const res = await fetch(url, { headers:{ 'Accept':'application/json' }});
+      if (!res.ok) throw new Error('Failed to fetch products from server');
+      allData = await res.json() || [];
+      filterAndShow();
+    }catch(err){
+      console.error(err);
+      errorMessage.innerHTML = `
+        <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+          <p class="font-semibold">Failed to load products</p>
+          <p class="text-sm opacity-80 mt-1">${sanitize(err.message)}</p>
+        </div>`;
+      displaySection({ error:true });
+      if (typeof showToast === 'function') showToast('Load Failed', 'Could not fetch products.', 'error');
+    }
+  }
+
+  async function doRefresh() {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    const prev = btnRefresh.innerHTML;
+    btnRefresh.disabled = true;
+    btnRefresh.innerText = 'Refreshing...';
+    try {
+      await fetchProducts();
+      if (typeof showToast === 'function') showToast('Refreshed', 'Product list updated.', 'success');
+    } finally {
+      btnRefresh.disabled = false;
+      btnRefresh.innerHTML = prev;
+      isRefreshing = false;
+    }
+  }
+  btnAll.addEventListener('click', (e) => { e.preventDefault(); activeFilter = 'all'; urlParams.delete('category'); categoryParam = ''; urlParams.set('filter','all'); history.replaceState({}, '', `${location.pathname}?${urlParams}`); fetchProducts(); });
+  btnMy.addEventListener('click',  (e) => { e.preventDefault(); activeFilter = 'my';  urlParams.delete('category'); categoryParam = ''; urlParams.set('filter','my');  history.replaceState({}, '', `${location.pathname}?${urlParams}`); fetchProducts(); });
+  btnRefresh.addEventListener('click', doRefresh);
+
+  updateFilterButtonsAppearance();
+  fetchProducts();
+
+  // refresh ketika aksi dari modal
+  document.addEventListener('productAdded',   fetchProducts);
+  document.addEventListener('productUpdated', fetchProducts);
+  document.addEventListener('productDeleted', fetchProducts);
+
+  // ========= MODAL: Create/Update (AJAX) =========
+  function getCSRFToken() {
+    const inForm = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (inForm && inForm.value) return inForm.value;
+    const match = document.cookie.match(/(^|;)\s*csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[2]) : '';
+  }
+
+  function showModal() {
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+    if (!['create','update'].includes(modal.dataset.mode)) setModalMode('create');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      modalContent.classList.remove('opacity-0', 'scale-95');
+      modalContent.classList.add('opacity-100', 'scale-100');
+    });
+    const first = document.getElementById('name'); if (first) first.focus();
+  }
+  function hideModal() {
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+    modalContent.classList.remove('opacity-100', 'scale-100');
+    modalContent.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => { modal.classList.add('hidden'); }, 150);
+  }
+  document.getElementById('crudModal')?.addEventListener('click', (e) => { if (e.target.id === 'crudModal') hideModal(); });
+  document.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('crudModal');
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) hideModal();
+  });
+
+  function setModalMode(mode, productData = null) {
+    const modal = document.getElementById('crudModal');
+    const title = document.getElementById('crudModalTitle');
+    const sub = document.getElementById('crudModalSubtitle');
+    const submitBtn = document.getElementById('submitProduct');
+    const form = document.getElementById('productForm');
+    modal.dataset.mode = mode;
+
+    if (mode === 'create') {
+      title.textContent = 'Create New Product';
+      sub.textContent = 'Add a new item to SoccerHaus';
+      submitBtn.textContent = 'Publish Product';
+      form.reset();
+      document.getElementById('product_id').value = '';
+      document.getElementById('is_featured').checked = false;
+    } else {
+      title.textContent = 'Update Product';
+      sub.textContent = 'Edit this item';
+      submitBtn.textContent = 'Save Changes';
+      if (productData) {
+        document.getElementById('product_id').value = productData.id ?? '';
+        document.getElementById('name').value = productData.name ?? productData.title ?? '';
+        document.getElementById('price').value = productData.price ?? '';
+        document.getElementById('description').value = productData.description ?? productData.content ?? '';
+        document.getElementById('category').value = productData.category ?? '';
+        document.getElementById('thumbnail').value = productData.thumbnail ?? '';
+        document.getElementById('is_featured').checked = Boolean(productData.is_featured);
+      }
+    }
+  }
+
+  window.openCreateModal = function() { setModalMode('create'); showModal(); };
+  window.openEditModal = async function(productId) {
+    try {
+      const modal = document.getElementById('crudModal');
+      const template = modal.dataset.detailUrlTemplate; // uses show_json_by_id/<id>/
+      const detailUrl = template.replace(/0\/?$/, String(productId) + '/');
+      const res = await fetch(detailUrl, { method: 'GET' });
+      if (!res.ok) throw new Error(await res.text() || 'Failed to load detail');
+      const data = await res.json();
+      setModalMode('update', data);
+      showModal();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to load product', String(err.message || err), 'error');
+    }
+  };
+
+  async function submitProductAJAX() {
+    const modal = document.getElementById('crudModal');
+    const formEl = document.getElementById('productForm');
+    const submitBtn = document.getElementById('submitProduct');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = (modal.dataset.mode === 'update') ? 'Saving...' : 'Publishing...';
+
+    try {
+      const fd = new FormData(formEl);
+      if (!fd.has('is_featured')) fd.append('is_featured', '');
+
+      const csrf = getCSRFToken();
+      const createUrl = modal.dataset.createUrl;
+      const updateTemplate = modal.dataset.updateUrlTemplate;
+      let url = createUrl;
+      if (modal.dataset.mode === 'update') {
+        const id = document.getElementById('product_id').value;
+        url = updateTemplate.replace(/0\/?$/, String(id) + '/');
+      }
+      const res = await fetch(url, { method: 'POST', headers: csrf ? { 'X-CSRFToken': csrf } : {}, body: fd });
+      if (!res.ok) {
+        let msg = await res.text(); try { const j = JSON.parse(msg); msg = j?.detail || j?.message || msg; } catch(_){}
+        throw new Error(msg || 'Request failed');
+      }
+      formEl.reset(); hideModal();
+      const isUpdate = modal.dataset.mode === 'update';
+      document.dispatchEvent(new CustomEvent(isUpdate ? 'productUpdated' : 'productAdded'));
+      showToast(isUpdate ? 'Product updated!' : 'Product added!', '', 'success');
+      return false;
+    } catch (err) {
+      console.error(err);
+      showToast('Save Failed', String(err.message || err), 'error');
+      return false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+  document.getElementById("productForm").addEventListener("submit", function(e) { e.preventDefault(); submitProductAJAX(); });
+
+  // ========= MODAL: Delete (AJAX) =========
+  const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+  let pendingDeleteId = null;
+
+  function openDeleteModal(id, title='this product') {
+    pendingDeleteId = id;
+    document.getElementById('del-sub').textContent = `Are you sure you want to delete “${title}”?`;
+    confirmDeleteModal.classList.remove('hidden');
+  }
+  function hideDeleteModal() { confirmDeleteModal.classList.add('hidden'); pendingDeleteId = null; }
+
+  async function confirmDeleteAJAX() {
+    if (!pendingDeleteId) return;
+    const csrf = getCSRFToken();
+    const delUrl = `{% url 'main:delete_product_ajax' 0 %}`.replace(/0\/?$/, String(pendingDeleteId) + '/');
+    const btn = document.getElementById('btn-confirm-del');
+    const prev = btn.textContent; btn.disabled = true; btn.textContent = 'Deleting...';
+    try {
+      const res = await fetch(delUrl, { method:'POST', headers: csrf ? { 'X-CSRFToken': csrf } : {} });
+      if (!res.ok) { const t = await res.text(); throw new Error(t || 'Delete failed'); }
+      hideDeleteModal();
+      showToast('Product deleted', '', 'success');
+      document.dispatchEvent(new CustomEvent('productDeleted'));
+    } catch (err) {
+      console.error(err);
+      showToast('Delete Failed', String(err.message||err), 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = prev;
+    }
+  }
+  document.getElementById('btn-confirm-del').addEventListener('click', confirmDeleteAJAX);
+
+  document.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('[data-edit-id]');
+    if (editBtn && typeof openEditModal === 'function') {
+      openEditModal(editBtn.dataset.editId);
+      return;
+    }
+    const delBtn = e.target.closest('[data-del-id]');
+    if (delBtn && typeof openDeleteModal === 'function') {
+      openDeleteModal(delBtn.dataset.delId, delBtn.dataset.delName || 'this product');
+    }
+  });
+</script>
 {% endblock content %}

@@ -1,122 +1,147 @@
 <nav class="fixed top-0 left-0 w-full z-50 flex flex-col items-center bg-[#A2A86A] py-4">
-    <!-- Wrapper oval -->
-    <div class="w-[90%] md:w-[80%] bg-[#E8E2D4] rounded-full flex items-center justify-between px-6 py-3 shadow-md">
-      <!-- Logo -->
-      <h1 class="text-xl md:text-2xl font-semibold text-[#E8E2D4] bg-[#3F5A83] rounded-full px-4 py-1 -ml-4">
-        SoccerHaus
-      </h1>
-  
+  <!-- Wrapper oval -->
+  <div class="w-[90%] md:w-[80%] bg-[#E8E2D4] rounded-full flex items-center justify-between px-6 py-3 shadow-md">
+    <!-- Logo -->
+    <h1 class="text-xl md:text-2xl font-semibold text-[#E8E2D4] bg-[#3F5A83] rounded-full px-4 py-1 -ml-4">
+      SoccerHaus
+    </h1>
+
     <!-- Desktop Navigation -->
     <div class="hidden md:flex items-center space-x-6 text-gray-800 font-medium">
-        <a href="{% url 'main:show_main' %}" class="hover:text-gray-900 transition-colors">Home</a>
-        <a href="{% url 'main:create_product' %}" class="hover:text-gray-900 transition-colors">Create Product</a>
-    
-        <!-- Kategori -->
-        <div class="flex items-center space-x-2 pl-4">
+      <a href="{% url 'main:show_main' %}" class="hover:text-gray-900 transition-colors">Home</a>
+      <a href="{% url 'main:create_product' %}" class="hover:text-gray-900 transition-colors">Create Product</a>
+
+      <!-- Kategori -->
+      <div class="flex items-center space-x-2 pl-4">
         <a href="{% url 'main:show_main' %}?category=jersey" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm hover:bg-[#3F5A83] hover:text-white transition">Jersey</a>
         <a href="{% url 'main:show_main' %}?category=shoes" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm hover:bg-[#3F5A83] hover:text-white transition">Shoes</a>
         <a href="{% url 'main:show_main' %}?category=ball" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm hover:bg-[#3F5A83] hover:text-white transition">Ball</a>
         <a href="{% url 'main:show_main' %}?category=accessories" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm hover:bg-[#3F5A83] hover:text-white transition">Accessories</a>
         <a href="{% url 'main:show_main' %}?category=equipment" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm hover:bg-[#3F5A83] hover:text-white transition">Equipment</a>
-        </div>
+      </div>
     </div>
-    
-      <!-- Desktop User Section -->
-      <div class="hidden md:flex items-center space-x-4">
+
+    <!-- Desktop User Section -->
+    <div class="hidden md:flex items-center space-x-4">
+      {% if user.is_authenticated %}
+        <div class="text-right text-sm">
+          <div class="font-medium text-gray-800">{{ name|default:user.username }}</div>
+          <div class="text-xs text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
+        </div>
+        <!-- Tetap <a> untuk UI/UX; di-intercept JS ke AJAX -->
+        <a id="logout-desktop" href="{% url 'main:logout' %}" class="text-red-600 hover:text-red-700 font-medium transition-colors">
+          Logout
+        </a>
+      {% else %}
+        <a href="{% url 'main:login' %}" class="text-gray-800 hover:text-gray-900 font-medium transition-colors">
+          Login
+        </a>
+        <a href="{% url 'main:register' %}" class="bg-[#3F5A83] hover:bg-[#324666] text-[#E8E2D4] px-4 py-2 rounded-full font-medium transition-colors">
+          Register
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <div class="md:hidden flex items-center">
+      <button id="nav-btn" class="p-2 text-gray-700 hover:text-gray-900 transition-colors" aria-expanded="false" aria-label="Open menu">
+        <span class="sr-only">Open menu</span>
+        <div class="w-6 h-6 flex flex-col justify-center items-center">
+          <span class="bg-current block h-0.5 w-6 rounded-sm"></span>
+          <span class="bg-current block h-0.5 w-6 rounded-sm my-0.5"></span>
+          <span class="bg-current block h-0.5 w-6 rounded-sm"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="w-[90%] md:w-[80%] mt-2 md:hidden">
+    <div id="nav-menu" class="hidden bg-[#E8E2D4] text-gray-800 rounded-2xl shadow px-6 py-4">
+      <!-- Link utama -->
+      <div class="space-y-1">
+        <a href="{% url 'main:show_main' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Home</a>
+        <a href="{% url 'main:create_product' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Create Product</a>
+      </div>
+
+      <!-- Kategori -->
+      <div class="border-t border-gray-300/40 pt-4 mt-3">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar">
+          <a href="{% url 'main:show_main' %}?category=jersey" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Jersey</a>
+          <a href="{% url 'main:show_main' %}?category=shoes" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Shoes</a>
+          <a href="{% url 'main:show_main' %}?category=ball" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Ball</a>
+          <a href="{% url 'main:show_main' %}?category=accessories" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Accessories</a>
+          <a href="{% url 'main:show_main' %}?category=equipment" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Equipment</a>
+        </div>
+      </div>
+
+      <!-- User -->
+      <div class="border-t border-gray-300/40 pt-4 mt-3">
         {% if user.is_authenticated %}
-          <div class="text-right text-sm">
-            <div class="font-medium text-gray-800">{{ name|default:user.username }}</div>
-            <div class="text-xs text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
+          <div class="mb-3">
+            <div class="font-medium">{{ name|default:user.username }}</div>
+            <div class="text-sm text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
           </div>
-          <a href="{% url 'main:logout' %}" class="text-red-600 hover:text-red-700 font-medium transition-colors">
+          <!-- Tetap <a>; di-intercept ke AJAX -->
+          <a id="logout-mobile" href="{% url 'main:logout' %}" class="block bg-[#3F5A83] text-[#E8E2D4] hover:brightness-95 font-medium py-3 px-4 rounded-full text-center transition-colors">
             Logout
           </a>
         {% else %}
-          <a href="{% url 'main:login' %}" class="text-gray-800 hover:text-gray-900 font-medium transition-colors">
-            Login
-          </a>
-          <a href="{% url 'main:register' %}" class="bg-[#3F5A83] hover:bg-[#324666] text-[#E8E2D4] px-4 py-2 rounded-full font-medium transition-colors">
-            Register
-          </a>
+          <a href="{% url 'main:login' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Login</a>
+          <a href="{% url 'main:register' %}" class="block bg-[#3F5A83] text-[#E8E2D4] hover:brightness-95 font-medium py-3 px-4 rounded-full text-center transition-colors mt-2">Register</a>
         {% endif %}
       </div>
-  
-      <!-- Mobile Menu Button -->
-      <div class="md:hidden flex items-center">
-        <button id="nav-btn" class="p-2 text-gray-700 hover:text-gray-900 transition-colors" aria-expanded="false" aria-label="Open menu">
-          <span class="sr-only">Open menu</span>
-          <div class="w-6 h-6 flex flex-col justify-center items-center">
-            <span class="bg-current block h-0.5 w-6 rounded-sm"></span>
-            <span class="bg-current block h-0.5 w-6 rounded-sm my-0.5"></span>
-            <span class="bg-current block h-0.5 w-6 rounded-sm"></span>
-          </div>
-        </button>
-      </div>
     </div>
-  
-<!-- Mobile Menu (tetap di dalam <nav>) -->
-    <div class="w-[90%] md:w-[80%] mt-2 md:hidden">
-        <div id="nav-menu" class="hidden bg-[#E8E2D4] text-gray-800 rounded-2xl shadow px-6 py-4">
-          <!-- Link utama -->
-          <div class="space-y-1">
-            <a href="{% url 'main:show_main' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Home</a>
-            <a href="{% url 'main:create_product' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Create Product</a>
-          </div>
-      
-          <!-- Kategori (scroll horizontal biar muat di hp) -->
-          <div class="border-t border-gray-300/40 pt-4 mt-3">
-            <div class="flex gap-2 overflow-x-auto no-scrollbar">
-              <a href="{% url 'main:show_main' %}?category=jersey" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Jersey</a>
-              <a href="{% url 'main:show_main' %}?category=shoes" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Shoes</a>
-              <a href="{% url 'main:show_main' %}?category=ball" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Ball</a>
-              <a href="{% url 'main:show_main' %}?category=accessories" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Accessories</a>
-              <a href="{% url 'main:show_main' %}?category=equipment" class="px-3 py-1 rounded-full bg-white border border-[#3F5A83] text-[#3F5A83] text-sm whitespace-nowrap hover:bg-[#3F5A83] hover:text-white transition">Equipment</a>
-            </div>
-          </div>
-      
-          <!-- User -->
-          <div class="border-t border-gray-300/40 pt-4 mt-3">
-            {% if user.is_authenticated %}
-              <div class="mb-3">
-                <div class="font-medium">{{ name|default:user.username }}</div>
-                <div class="text-sm text-gray-500">{{ npm|default:"Student" }} - {{ class|default:"Class" }}</div>
-              </div>
-              <a href="{% url 'main:logout' %}" class="block bg-[#3F5A83] text-[#E8E2D4] hover:brightness-95 font-medium py-3 px-4 rounded-full text-center transition-colors">
-                Logout
-              </a>
-            {% else %}
-              <a href="{% url 'main:login' %}" class="block font-medium py-3 hover:text-gray-900 transition-colors">Login</a>
-              <a href="{% url 'main:register' %}" class="block bg-[#3F5A83] text-[#E8E2D4] hover:brightness-95 font-medium py-3 px-4 rounded-full text-center transition-colors mt-2">
-                Register
-              </a>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-        
-      <script>
-        const btn  = document.getElementById('nav-btn');
-        const menu = document.getElementById('nav-menu');
-      
-        btn.addEventListener('click', () => {
-          const isOpen = !menu.classList.contains('hidden');
-          menu.classList.toggle('hidden');
-          btn.setAttribute('aria-expanded', String(!isOpen));
-        });
-      
-        menu?.querySelectorAll('a').forEach(a => {
-          a.addEventListener('click', () => {
-            menu.classList.add('hidden');
-            btn.setAttribute('aria-expanded', 'false');
-          });
-        });
-      
-        document.addEventListener('click', (e) => {
-          if (!menu.contains(e.target) && !btn.contains(e.target)) {
-            menu.classList.add('hidden');
-            btn.setAttribute('aria-expanded', 'false');
-          }
-        });
-      </script>
-    </nav>
-      
+  </div>
+
+  <!-- Toast container (kalau belum ada di page) -->
+  <div id="toast-wrap" class="fixed bottom-6 right-6 space-y-2 z-[60] pointer-events-none"></div>
+
+  <script>
+    // Toggle mobile menu
+    const btn  = document.getElementById('nav-btn');
+    const menu = document.getElementById('nav-menu');
+    btn?.addEventListener('click', () => {
+      const isOpen = !menu.classList.contains('hidden');
+      menu.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(!isOpen));
+    });
+    menu?.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); });
+    });
+    document.addEventListener('click', (e) => {
+      if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Toast util (ringan)
+    function showToast(title, message='', type='info') {
+      const wrap = document.getElementById('toast-wrap');
+      const el = document.createElement('div');
+      const colors = { success:'bg-green-600', error:'bg-red-600', info:'bg-gray-800', warn:'bg-yellow-600' };
+      el.className = (colors[type]||colors.info) + ' text-white rounded-lg shadow-lg px-4 py-3 max-w-xs';
+      el.style.pointerEvents = 'auto';
+      el.innerHTML = '<div class="font-semibold">'+title+'</div>' + (message?'<div class="text-sm opacity-90 mt-0.5">'+message+'</div>':'');
+      wrap.appendChild(el);
+      setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.remove(), 280); }, 2200);
+    }
+
+    // Logout via AJAX (desktop & mobile)
+    function getCsrf(){ const m=document.cookie.match(/csrftoken=([^;]+)/); return m?decodeURIComponent(m[1]):''; }
+    async function doLogout(e){
+      e.preventDefault();
+      try{
+        const res = await fetch("{% url 'main:logout_ajax' %}", { method:'POST', headers:{ 'X-CSRFToken': getCsrf() }});
+        if(!res.ok){ throw new Error(await res.text() || 'Logout failed'); }
+        showToast('Signed out', 'See you again!', 'success');
+        setTimeout(()=> window.location.href = "{% url 'main:login' %}", 450);
+      }catch(err){
+        console.error(err); showToast('Logout Failed', '', 'error');
+      }
+    }
+    document.getElementById('logout-desktop')?.addEventListener('click', doLogout);
+    document.getElementById('logout-mobile')?.addEventListener('click', doLogout);
+  </script>
+</nav>

@@ -1,0 +1,295 @@
+<!-- Modal -->
+<div
+  id="crudModal"
+  class="hidden fixed inset-0 z-50 w-full flex items-center justify-center bg-gray-800 bg-opacity-50"
+  role="dialog" aria-modal="true"
+  data-create-url="{% url 'main:add_product_entry_ajax' %}"
+  data-update-url-template="{% url 'main:update_product_entry_ajax' 0 %}"
+  data-detail-url-template="{% url 'main:show_json_by_id' 0 %}"
+  >
+  <div
+    id="crudModalContent"
+    class="bg-white rounded-lg shadow-lg w-5/6 sm:w-3/5 md:w-1/2 lg:w-2/5 xl:w-1/3 max-h-screen overflow-y-auto transition-all duration-200 transform opacity-0 scale-95"
+  >
+    <!-- Modal header -->
+    <div class="flex items-center justify-between p-4 border-b">
+      <div>
+        <h3 id="crudModalTitle" class="text-xl font-semibold text-gray-900">
+          Create New Product
+        </h3>
+        <p id="crudModalSubtitle" class="text-sm text-gray-600 mt-1">Add a new item to SoccerHaus</p>
+      </div>
+      <button type="button"
+              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+              onclick="hideModal()">
+        <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"></path>
+        </svg>
+        <span class="sr-only">Close modal</span>
+      </button>
+    </div>
+
+    <!-- Modal body -->
+    <div class="px-6 py-4 space-y-6 form-style">
+      <!-- NOTE: action akan diisi via AJAX -->
+      <form id="productForm">
+        <!-- mode/update id (hidden, tidak mengubah UI) -->
+        <input type="hidden" id="product_id" name="id" value="">
+        <!-- jika kamu render {{ csrf_token }} di template, Django akan menambah input hidden csrfmiddlewaretoken di sini -->
+
+        <div class="mb-4">
+          <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+          <input type="text" id="name" name="name"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="e.g., Adidas Predator Jersey" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="price" class="block text-sm font-medium text-gray-700">Price</label>
+          <input type="number" id="price" name="price" min="0" step="1"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="e.g., 250000" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+          <textarea id="description" name="description" rows="3"
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                    placeholder="Describe the product..." required></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+          <select id="category" name="category"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" required>
+            <option value="">Choose a category</option>
+            <option value="jersey">Jersey</option>
+            <option value="shoes">Shoes</option>
+            <option value="ball">Ball</option>
+            <option value="accessories">Accessories</option>
+            <option value="equipment">Equipment</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="thumbnail" class="block text-sm font-medium text-gray-700">Thumbnail URL</label>
+          <input type="url" id="thumbnail" name="thumbnail"
+                 class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                 placeholder="https://example.com/image.jpg">
+        </div>
+
+        <div class="mb-4">
+          <div class="flex items-center">
+            <input id="is_featured" name="is_featured" type="checkbox"
+                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded">
+            <label for="is_featured" class="ml-2 text-sm font-medium text-gray-900">Featured Product</label>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal footer -->
+    <div class="flex flex-col sm:flex-row gap-4 p-6 border-t border-gray-200 rounded-b">
+      <button type="button" id="cancelButton"
+              class="order-2 sm:order-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors text-center"
+              onclick="hideModal()">Cancel</button>
+
+      <!-- tombol submit ditangani via AJAX -->
+      <button type="submit" id="submitProduct" form="productForm"
+              class="order-1 sm:order-2 flex-1"
+              style="background-color:#3F5A83; color:#E8E2D4; border-radius:0.375rem; padding:0.75rem 1.5rem;">
+        Publish Product
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ======================
+  // Util: CSRF (Django)
+  // ======================
+  function getCSRFToken() {
+    // 1) coba ambil dari input hidden (kalau template menyertakan {% csrf_token %} di dalam <form>)
+    const inForm = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (inForm && inForm.value) return inForm.value;
+
+    // 2) fallback: ambil dari cookie csrftoken
+    const match = document.cookie.match(/(^|;)\s*csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[2]) : '';
+  }
+
+  // ======================
+  // Modal open/close
+  // ======================
+  function showModal() {
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      modalContent.classList.remove('opacity-0', 'scale-95');
+      modalContent.classList.add('opacity-100', 'scale-100');
+    });
+
+    // fokuskan ke field pertama
+    const first = document.getElementById('name');
+    if (first) first.focus();
+  }
+
+  function hideModal() {
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+    modalContent.classList.remove('opacity-100', 'scale-100');
+    modalContent.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => { modal.classList.add('hidden'); }, 150);
+  }
+
+  // Tutup jika klik overlay di luar konten
+  document.getElementById('crudModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'crudModal') hideModal();
+  });
+
+  // Tutup via Escape
+  document.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('crudModal');
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+      hideModal();
+    }
+  });
+
+  // ======================
+  // Mode: create / update
+  // ======================
+  function setModalMode(mode, productData = null) {
+    const modal = document.getElementById('crudModal');
+    const title = document.getElementById('crudModalTitle');
+    const sub = document.getElementById('crudModalSubtitle');
+    const submitBtn = document.getElementById('submitProduct');
+    const form = document.getElementById('productForm');
+
+    modal.dataset.mode = mode;
+
+    if (mode === 'create') {
+      title.textContent = 'Create New Product';
+      sub.textContent = 'Add a new item to SoccerHaus';
+      submitBtn.textContent = 'Publish Product';
+      form.reset();
+      document.getElementById('product_id').value = '';
+      // pastikan default checkbox tidak “undefined”
+      document.getElementById('is_featured').checked = false;
+    } else {
+      title.textContent = 'Update Product';
+      sub.textContent = 'Edit this item';
+      submitBtn.textContent = 'Save Changes';
+      if (productData) {
+        // Prefill form
+        document.getElementById('product_id').value = productData.id ?? '';
+        document.getElementById('name').value = productData.name ?? '';
+        document.getElementById('price').value = productData.price ?? '';
+        document.getElementById('description').value = productData.description ?? '';
+        document.getElementById('category').value = productData.category ?? '';
+        document.getElementById('thumbnail').value = productData.thumbnail ?? '';
+        document.getElementById('is_featured').checked = Boolean(productData.is_featured);
+      }
+    }
+  }
+
+  // Panggil ini dari tombol "Add Product"
+  window.openCreateModal = function() {
+    setModalMode('create');
+    showModal();
+  };
+
+  // Panggil ini dari tombol "Edit" di kartu/list product, contoh: openEditModal(42)
+  window.openEditModal = async function(productId) {
+    try {
+      const modal = document.getElementById('crudModal');
+      const template = modal.dataset.detailUrlTemplate; // ex: ".../detail/0/"
+      const detailUrl = template.replace(/0\/?$/, String(productId) + '/');
+
+      const res = await fetch(detailUrl, { method: 'GET' });
+      if (!res.ok) throw new Error(await res.text() || 'Failed to load detail');
+
+      const data = await res.json();
+      setModalMode('update', data);
+      showModal();
+    } catch (err) {
+      console.error(err);
+      if (typeof showToast === 'function') showToast('Failed to load product', String(err.message || err), 'error');
+      else alert('Failed to load product: ' + (err.message || err));
+    }
+  };
+
+  // ======================
+  // Submit (Create/Update)
+  // ======================
+  async function submitProductAJAX() {
+    const modal = document.getElementById('crudModal');
+    const formEl = document.getElementById('productForm');
+    const submitBtn = document.getElementById('submitProduct');
+
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = (modal.dataset.mode === 'update') ? 'Saving...' : 'Publishing...';
+
+    try {
+      const fd = new FormData(formEl);
+
+      // Pastikan checkbox terisi "on/empty" → Django akan handle via presence key
+      if (!fd.has('is_featured')) fd.append('is_featured', '');
+
+      const csrf = getCSRFToken();
+      const createUrl = modal.dataset.createUrl;
+      const updateTemplate = modal.dataset.updateUrlTemplate;
+
+      let url = createUrl;
+      if (modal.dataset.mode === 'update') {
+        const id = document.getElementById('product_id').value;
+        url = updateTemplate.replace(/0\/?$/, String(id) + '/');
+      }
+
+      const res = await fetch(url, {
+        method: 'POST', // gunakan POST untuk keduanya (sesuai constraint tugas)
+        headers: csrf ? { 'X-CSRFToken': csrf } : {}, // penting untuk Django
+        body: fd
+      });
+
+      if (!res.ok) {
+        // coba ambil JSON error bila ada
+        let msg = await res.text();
+        try {
+          const j = JSON.parse(msg);
+          msg = j?.message || j?.error || msg;
+        } catch (_) {}
+        throw new Error(msg || 'Request failed');
+      }
+
+      // sukses → reset/tutup + event + toast
+      formEl.reset();
+      hideModal();
+
+      const isUpdate = modal.dataset.mode === 'update';
+      document.dispatchEvent(new CustomEvent(isUpdate ? 'productUpdated' : 'productAdded'));
+
+      if (typeof showToast === 'function') {
+        showToast(isUpdate ? 'Product updated!' : 'Product added!', '', 'success');
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      if (typeof showToast === 'function') showToast('Save Failed', String(err.message || err), 'error');
+      else alert('Save Failed: ' + (err.message || err));
+      return false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+
+  // Tangani submit form agar tidak reload halaman
+  document.getElementById("productForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    submitProductAJAX();
+  });
+</script>

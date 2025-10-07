@@ -8,18 +8,18 @@
 {% block content %}
 {% include 'navbar.html' %}
 
-<div class="min-h-screen w-full bg-[var(--brand-pink)] pt-24 px-4">
+<div class="min-h-screen w-full bg-[#F6F4EF] pt-24 px-4">
   <div class="max-w-3xl mx-auto">
 
-    <a href="{% url 'main:show_main' %}" class="inline-flex items-center text-[#3F5A83] hover:underline font-medium mb-6">
+    <a href="{% url 'main:show_main' %}" class="inline-flex items-center text-[#1F2A44] hover:underline font-medium mb-6">
       ← Back to Products
     </a>
 
-    <div class="bg-[#E8E2D4] rounded-2xl shadow-md p-8">
-      <h1 class="text-3xl font-extrabold text-[#1f2937] mb-2">Create New Product</h1>
-      <p class="text-[#3F5A83]/80 mb-6">Share your item with the community</p>
+    <div class="bg-white rounded-2xl shadow-md p-8 border border-gray-100">
+      <h1 class="text-3xl font-extrabold text-[#1F2A44] mb-2">Create New Product</h1>
+      <p class="text-[#1F2A44]/70 mb-6">Share your item with the community</p>
 
-      <form method="POST" class="space-y-4">
+      <form id="create-form" method="POST" class="space-y-4" data-create-url="{% url 'main:add_product_entry_ajax' %}">
         {% csrf_token %}
 
         <div>
@@ -52,19 +52,79 @@
           <label for="{{ form.is_featured.id_for_label }}" class="text-sm font-medium text-[#1f2937]">Mark as featured</label>
         </div>
 
+        <div id="inline-errors" class="hidden mt-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm p-3"></div>
+
         <div class="flex items-center gap-3 pt-2">
           <a href="{% url 'main:show_main' %}"
-             class="px-4 py-2 rounded-md font-medium bg-white text-[#3F5A83] border border-[#3F5A83] hover:bg-[#3F5A83]/10 transition">
+             class="px-4 py-2 rounded-md font-medium bg-white text-[#1F2A44] border border-[#1F2A44]/40 hover:bg-[#1F2A44] hover:text-white transition">
             Cancel
           </a>
-          <button type="submit"
-                  class="px-5 py-2 rounded-md font-medium text-white bg-[#3F5A83] hover:bg-[#2d4264] transition">
+          <button id="btn-submit" type="submit"
+                  class="px-5 py-2 rounded-md font-medium text-white bg-[#1F2A44] hover:brightness-110 transition">
             Publish Product
           </button>
         </div>
       </form>
+
+      <!-- Demo toast -->
+      <div class="mt-6">
+        <button type="button"
+          class="px-4 py-2 rounded-md font-medium bg-white text-[#1F2A44] border border-[#1F2A44]/40 hover:bg-[#1F2A44] hover:text-white transition"
+          onclick="showToast('Heads up', 'This is a sample toast.')">
+          Click to Show Toast
+        </button>
+      </div>
     </div>
 
   </div>
 </div>
+
+<!-- Toast lightweight -->
+<div id="toast-wrap" class="fixed bottom-6 right-6 space-y-2 z-[60]"></div>
+<script>
+  function showToast(title, message='', type='info') {
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    const colors = { success:'bg-green-600', error:'bg-red-600', info:'bg-gray-800', warn:'bg-yellow-600' };
+    el.className = `${colors[type]||colors.info} text-white rounded-lg shadow-lg px-4 py-3 max-w-xs`;
+    el.innerHTML = `<div class="font-semibold">${title}</div>${message?`<div class="text-sm opacity-90 mt-0.5">${message}</div>`:''}`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.remove(), 280); }, 2200);
+  }
+</script>
+
+<script>
+  const form = document.getElementById('create-form');
+  const btn  = document.getElementById('btn-submit');
+  const box  = document.getElementById('inline-errors');
+
+  function getCsrf(){
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function setErrors(html) {
+    if (!html) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.classList.remove('hidden'); box.innerHTML = html;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Publishing...'; setErrors('');
+    try {
+      const url = form.dataset.createUrl;
+      const fd = new FormData(form);
+      const res = await fetch(url, { method:'POST', headers: { 'X-CSRFToken': getCsrf() }, body: fd });
+      if (!res.ok) {
+        const txt = await res.text();
+        let msg = 'Failed to create product.'; try { const j = JSON.parse(txt); msg = j.detail || j.message || msg; } catch (_){}
+        setErrors(`<p>${msg}</p>`); showToast('Create Failed', msg, 'error'); return;
+      }
+      showToast('Product Published', 'Your product has been created.', 'success');
+      document.dispatchEvent(new CustomEvent('productAdded'));
+      window.location.href = "{% url 'main:show_main' %}?filter=my";
+    } catch (err) {
+      console.error(err); setErrors('<p>Network or server error.</p>'); showToast('Network Error', 'Please try again.', 'error');
+    } finally { btn.disabled = false; btn.textContent = prev; }
+  });
+</script>
 {% endblock content %}

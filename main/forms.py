@@ -1,5 +1,7 @@
 # main/forms.py
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.html import strip_tags
 from .models import Product
 
 INPUT = "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3F5A83]"
@@ -19,3 +21,15 @@ class ProductForm(forms.ModelForm):
             "category": forms.Select(attrs={"class": SELECT}),
             "is_featured": forms.CheckboxInput(attrs={"class": CHECKBOX}),
         }
+
+    def clean_name(self):
+        value = strip_tags(self.cleaned_data.get("name", "")).strip()
+        if not value:
+            raise ValidationError("Name cannot be empty.")
+        return value
+
+    def clean_description(self):
+        value = strip_tags(self.cleaned_data.get("description", "")).strip()
+        if not value:
+            raise ValidationError("Description cannot be empty.")
+        return value
