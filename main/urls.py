@@ -12,7 +12,9 @@ from main.views import (
     add_product_entry_ajax,        
     register_ajax, login_ajax, logout_ajax,  
     update_product_entry_ajax,     
-    delete_product_ajax,           
+    delete_product_ajax,
+    proxy_image,   
+    create_product_flutter,     
 )
 
 app_name = 'main'
@@ -36,4 +38,7 @@ urlpatterns = [
     path('ajax/register/', register_ajax, name='register_ajax'),
     path('ajax/login/',    login_ajax,    name='login_ajax'),
     path('ajax/logout/',   logout_ajax,   name='logout_ajax'),
+    path('proxy-image/',   proxy_image,   name='proxy_image'),
+    path('create-flutter/', create_product_flutter, name='create_product_flutter'),
+
 ]

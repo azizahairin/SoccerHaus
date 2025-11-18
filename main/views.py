@@ -12,6 +12,8 @@ from main.forms import ProductForm
 from main.models import Product
 from django.utils import timezone
 from django.utils.html import strip_tags
+import requests
+import json
 
 @login_required(login_url='/login')
 def show_main(request):
@@ -248,3 +250,59 @@ def logout_ajax(request):
     resp = JsonResponse({"ok": True, "message": "Logged out."})
     resp.delete_cookie('last_login')
     return resp
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
+    
+@csrf_exempt
+def create_product_flutter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            title       = strip_tags(data.get("title", ""))
+            content     = strip_tags(data.get("content", ""))
+            category    = data.get("category", "")
+            thumbnail   = data.get("thumbnail", "")
+            is_featured = data.get("is_featured", False)
+            price       = data.get("price", 0)
+            user        = request.user if request.user.is_authenticated else None
+
+            new_product = Product(
+                name=title,              
+                description=content,     
+                category=category,
+                thumbnail=thumbnail or None,
+                is_featured=is_featured,
+                price=price,
+                user=user,
+            )
+            new_product.save()
+
+            return JsonResponse({"status": "success"}, status=200)
+
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": str(e)},
+                status=400,
+            )
+
+    return JsonResponse(
+        {"status": "error", "message": "Invalid request method."},
+        status=405,
+    )
